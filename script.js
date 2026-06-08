@@ -1,4 +1,13 @@
 const themeStorageKey = "touchprint-status-theme";
+let latestStatusData = null;
+
+function formatStatus(status) {
+  if (!status) {
+    return "Unknown";
+  }
+
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 function formatUpdatedAt(value) {
   if (!value) {
@@ -11,6 +20,55 @@ function formatUpdatedAt(value) {
   }
 
   return `Updated ${date.toLocaleString()}`;
+}
+
+function formatRecordTime(value) {
+  if (!value) {
+    return "Unknown time";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString();
+}
+
+function openRecords(siteId) {
+  if (!latestStatusData) {
+    return;
+  }
+
+  const site = latestStatusData.sites.find((item) => item.id === siteId);
+  const result = latestStatusData.results?.[siteId];
+  const records = (result?.history || []).slice().reverse();
+  const modal = document.getElementById("records-modal");
+  const subtitle = document.getElementById("records-subtitle");
+  const list = document.getElementById("records-list");
+
+  document.getElementById("records-title").textContent = `${site?.name || "Site"} records`;
+  subtitle.textContent = site?.url || "";
+
+  if (!records.length) {
+    list.innerHTML = '<div class="record-empty">No history yet.</div>';
+  } else {
+    list.innerHTML = records
+      .map((record) => `
+        <div class="record-row">
+          <div class="record-time">${formatRecordTime(record.time)}</div>
+          <div class="record-status">${formatStatus(record.status)}</div>
+          <div class="record-latency">${record.responseTimeMs == null ? "No latency" : `${record.responseTimeMs} ms`}</div>
+        </div>
+      `)
+      .join("");
+  }
+
+  modal.hidden = false;
+}
+
+function closeRecords() {
+  document.getElementById("records-modal").hidden = true;
 }
 
 function createServiceCards(data) {
@@ -44,6 +102,7 @@ function createServiceCards(data) {
           <h3 class="service-name">${site.name}</h3>
           <span class="status-label">${result.message || "Unknown"}</span>
           <span class="service-meta">${result.uptime30d == null ? "No uptime yet" : `${result.uptime30d}% uptime`}</span>
+          <button class="service-action" type="button" data-site-records="${site.id}">Records</button>
         </div>
         <div class="mini-bars" aria-label="${site.name} history">
           ${bars || '<span class="empty-history">No history</span>'}
@@ -55,6 +114,7 @@ function createServiceCards(data) {
 }
 
 function renderStatusPage(data) {
+  latestStatusData = data;
   document.getElementById("summary-title").textContent = data.overallStatus || "Status unavailable";
   document.getElementById("summary-text").textContent = data.overallMessage || "No message";
   document.getElementById("summary-grid").textContent = `${data.sites?.filter((site) => site.show !== false).length || 0} services`;
@@ -82,6 +142,20 @@ function initThemeToggle() {
   });
 }
 
+function initRecordsEvents() {
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-site-records]");
+    if (trigger) {
+      openRecords(trigger.getAttribute("data-site-records"));
+      return;
+    }
+
+    if (event.target.closest("[data-close-records='true']") || event.target.id === "records-close") {
+      closeRecords();
+    }
+  });
+}
+
 async function initStatusPage() {
   try {
     const response = await fetch("./status.json", { cache: "no-store" });
@@ -103,4 +177,6 @@ async function initStatusPage() {
 }
 
 initThemeToggle();
+initRecordsEvents();
 initStatusPage();
+setInterval(initStatusPage, 60 * 1000);

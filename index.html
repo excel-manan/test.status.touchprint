@@ -39,6 +39,20 @@
     </section>
   </div>
 
+  <div id="records-modal" class="records-modal" hidden>
+    <div class="records-backdrop" data-close-records="true"></div>
+    <section class="records-panel" aria-labelledby="records-title" aria-modal="true" role="dialog">
+      <div class="records-header">
+        <div>
+          <h2 id="records-title" class="panel-title">Records</h2>
+          <div id="records-subtitle" class="panel-subtitle"></div>
+        </div>
+        <button id="records-close" class="theme-toggle" type="button" aria-label="Close records">Close</button>
+      </div>
+      <div id="records-list" class="records-list"></div>
+    </section>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
