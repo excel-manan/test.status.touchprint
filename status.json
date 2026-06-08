@@ -1,5 +1,5 @@
 {
-  "lastUpdated": "2026-06-08T23:12:45.363Z",
+  "lastUpdated": "2026-06-08T23:29:44.574Z",
   "overallStatus": "Fully operational",
   "overallMessage": "No active issues.",
   "sites": [
@@ -26,7 +26,7 @@
     "orders-touchprint-nz": {
       "status": "operational",
       "message": "OK",
-      "responseTimeMs": 1155,
+      "responseTimeMs": 1040,
       "uptime30d": 100,
       "history": [
         {
@@ -38,6 +38,24 @@
           "time": "2026-06-08T23:12:45.363Z",
           "status": "operational",
           "responseTimeMs": 1155
+        },
+        {
+          "time": "2026-06-08T23:29:44.574Z",
+          "status": "operational",
+          "responseTimeMs": 1040
+        }
+      ]
+    },
+    "dispatch-touchprint-nz": {
+      "status": "operational",
+      "message": "OK",
+      "responseTimeMs": 1015,
+      "uptime30d": 100,
+      "history": [
+        {
+          "time": "2026-06-08T23:29:44.574Z",
+          "status": "operational",
+          "responseTimeMs": 1015
         }
       ]
     }
