@@ -1,159 +1,106 @@
-const statusPageData = {
-  lastUpdated: "09 Jun 2026, 9:00 AM NZST",
-  overallStatus: "We're fully operational",
-  overallMessage: "No active issues affecting core services.",
-  summary: "4 services",
-  services: [
-    {
-      name: "Customer Portal",
-      status: "operational",
-      uptime: "30 day uptime: 99.98%",
-      description: "99.98% uptime",
-      history: [
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational"
-      ]
-    },
-    {
-      name: "Order Processing API",
-      status: "degraded",
-      uptime: "99.41% uptime",
-      description: "Higher latency",
-      history: [
-        "operational", "operational", "degraded", "degraded", "operational", "operational",
-        "operational", "operational", "operational", "degraded", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "degraded", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "degraded", "operational", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational",
-        "operational", "operational", "degraded", "operational", "operational", "operational",
-        "operational", "operational", "operational", "operational", "operational", "operational"
-      ]
-    },
-    {
-      name: "Authentication",
-      status: "operational",
-      uptime: "100% uptime",
-      description: "Normal",
-      history: new Array(60).fill("operational")
-    },
-    {
-      name: "File Uploads",
-      status: "maintenance",
-      uptime: "Planned work",
-      description: "Maintenance",
-      history: [
-        ...new Array(50).fill("operational"),
-        "maintenance", "maintenance", "maintenance", "maintenance", "maintenance",
-        "maintenance", "maintenance", "maintenance", "maintenance", "maintenance"
-      ]
-    }
-  ],
-  canDo: [
-    "Host on GitHub Pages.",
-    "Edit service status in script.js.",
-    "Show uptime bars and notes.",
-    "Keep light and dark theme."
-  ],
-  cannotDo: [
-    "Auto-ping without external automation.",
-    "Store secrets safely in browser code.",
-    "Run backend checks from GitHub Pages only.",
-    "Send alerts without another service."
-  ]
-};
-
-const statusLabels = {
-  operational: "Operational",
-  degraded: "Degraded",
-  outage: "Outage",
-  maintenance: "Maintenance"
-};
-
 const themeStorageKey = "touchprint-status-theme";
 
-function createServiceCards(services) {
+function formatUpdatedAt(value) {
+  if (!value) {
+    return "No checks yet";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return `Updated ${date.toLocaleString()}`;
+}
+
+function createServiceCards(data) {
   const serviceList = document.getElementById("service-list");
+  serviceList.innerHTML = "";
 
-  services.forEach((service) => {
-    const row = document.createElement("article");
-    row.className = "service-row";
+  data.sites
+    .filter((site) => site.show !== false)
+    .forEach((site) => {
+      const result = data.results?.[site.id] ?? {
+        status: "unknown",
+        message: "No data",
+        responseTimeMs: null,
+        uptime30d: null,
+        history: []
+      };
 
-    const bars = service.history
-      .map((item) => `<span class="mini-bar bar-${item}" aria-hidden="true"></span>`)
-      .join("");
+      const history = (result.history || []).slice(-60);
+      const bars = history
+        .map((item) => {
+          const status = typeof item === "string" ? item : item.status;
+          return `<span class="mini-bar bar-${status || "unknown"}" aria-hidden="true"></span>`;
+        })
+        .join("");
 
-    row.innerHTML = `
-      <div class="service-line">
-        <span class="status-dot dot-${service.status}" aria-hidden="true"></span>
-        <h3 class="service-name">${service.name}</h3>
-        <span class="status-label">${service.description}</span>
-        <span class="service-meta">${service.uptime}</span>
-      </div>
-      <div class="mini-bars" aria-label="${service.name} history">
-        ${bars}
-      </div>
-    `;
+      const row = document.createElement("article");
+      row.className = "service-row";
+      row.innerHTML = `
+        <div class="service-line">
+          <span class="status-dot dot-${result.status || "unknown"}" aria-hidden="true"></span>
+          <h3 class="service-name">${site.name}</h3>
+          <span class="status-label">${result.message || "Unknown"}</span>
+          <span class="service-meta">${result.uptime30d == null ? "No uptime yet" : `${result.uptime30d}% uptime`}</span>
+        </div>
+        <div class="mini-bars" aria-label="${site.name} history">
+          ${bars || '<span class="empty-history">No history</span>'}
+        </div>
+      `;
 
-    serviceList.appendChild(row);
-  });
+      serviceList.appendChild(row);
+    });
 }
 
-function createListItems(targetId, items) {
-  const list = document.getElementById(targetId);
-
-  items.forEach((item) => {
-    const li = document.createElement("li");
-    li.textContent = item;
-    list.appendChild(li);
-  });
-}
-
-function initStatusPage(data) {
-  document.getElementById("updated-at").textContent = data.lastUpdated;
-  document.getElementById("summary-title").textContent = data.overallStatus;
-  document.getElementById("summary-text").textContent = data.overallMessage;
-  document.getElementById("summary-grid").textContent = data.summary;
-  createServiceCards(data.services);
-  createListItems("can-do-list", data.canDo);
-  createListItems("cannot-do-list", data.cannotDo);
+function renderStatusPage(data) {
+  document.getElementById("summary-title").textContent = data.overallStatus || "Status unavailable";
+  document.getElementById("summary-text").textContent = data.overallMessage || "No message";
+  document.getElementById("summary-grid").textContent = `${data.sites?.filter((site) => site.show !== false).length || 0} services`;
+  document.getElementById("updated-at").textContent = formatUpdatedAt(data.lastUpdated);
+  createServiceCards(data);
 }
 
 function applyTheme(theme) {
-  const body = document.body;
-  const toggleText = document.querySelector(".theme-toggle-text");
-  const nextLabel = theme === "dark" ? "Light" : "Dark";
-
-  body.setAttribute("data-bs-theme", theme);
-  toggleText.textContent = nextLabel;
+  document.body.setAttribute("data-bs-theme", theme);
+  document.querySelector(".theme-toggle-text").textContent = theme === "dark" ? "Light" : "Dark";
 }
 
 function initThemeToggle() {
   const savedTheme = localStorage.getItem(themeStorageKey);
-  const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme = savedTheme || (systemPrefersDark ? "dark" : "light");
-  const toggle = document.getElementById("theme-toggle");
+  const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  const activeTheme = savedTheme || preferredTheme;
 
-  applyTheme(theme);
+  applyTheme(activeTheme);
 
-  toggle.addEventListener("click", () => {
+  document.getElementById("theme-toggle").addEventListener("click", () => {
     const currentTheme = document.body.getAttribute("data-bs-theme");
     const nextTheme = currentTheme === "dark" ? "light" : "dark";
-
     localStorage.setItem(themeStorageKey, nextTheme);
     applyTheme(nextTheme);
   });
 }
 
+async function initStatusPage() {
+  try {
+    const response = await fetch("./status.json", { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    renderStatusPage(data);
+  } catch {
+    renderStatusPage({
+      overallStatus: "Status unavailable",
+      overallMessage: "Could not load status.json",
+      lastUpdated: "",
+      sites: [],
+      results: {}
+    });
+  }
+}
+
 initThemeToggle();
-initStatusPage(statusPageData);
+initStatusPage();

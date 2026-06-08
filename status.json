@@ -1,0 +1,34 @@
+{
+  "lastUpdated": "2026-06-09T00:00:00Z",
+  "overallStatus": "Status pending",
+  "overallMessage": "Waiting for first automated check.",
+  "sites": [
+    {
+      "id": "orders-touchprint-nz",
+      "name": "Orders",
+      "url": "https://orders.touchprint.nz/health",
+      "group": "Public",
+      "expectedStatus": 200,
+      "timeoutMs": 15000,
+      "show": true
+    },
+    {
+      "id": "orders-touchprint-nz",
+      "name": "Orders",
+      "url": "https://dispatch.touchprint.nz/health",
+      "group": "Public",
+      "expectedStatus": 200,
+      "timeoutMs": 15000,
+      "show": true
+    }
+  ],
+  "results": {
+    "orders-touchprint-nz": {
+      "status": "unknown",
+      "message": "No checks yet",
+      "responseTimeMs": null,
+      "uptime30d": null,
+      "history": []
+    }
+  }
+}

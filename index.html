@@ -4,21 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TouchPrint Status</title>
-  <meta
-    name="description"
-    content="Service status page for TouchPrint websites and services."
-  >
+  <meta name="description" content="TouchPrint service status">
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
     crossorigin="anonymous"
-  >
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
-    rel="stylesheet"
   >
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -26,64 +17,28 @@
   <div class="page-shell">
     <header class="topbar">
       <h1 class="brand">TouchPrint</h1>
-      <div class="topbar-actions">
-        <a class="header-link" href="#limits">Notes</a>
-        <button
-          id="theme-toggle"
-          class="theme-toggle"
-          type="button"
-          aria-label="Toggle dark mode"
-        >
-          <span class="theme-toggle-text">Dark</span>
-        </button>
-      </div>
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">
+        <span class="theme-toggle-text">Dark</span>
+      </button>
     </header>
 
-    <section class="summary" aria-labelledby="summary-title">
-      <h2 id="summary-title" class="summary-title">We're fully operational</h2>
-      <p class="summary-text" id="summary-text">No active issues affecting core services.</p>
+    <section class="summary">
+      <h2 id="summary-title" class="summary-title">Status unavailable</h2>
+      <p id="summary-text" class="summary-text">Loading status data.</p>
     </section>
 
-    <section class="panel" id="services" aria-labelledby="services-title">
+    <section class="panel" aria-labelledby="services-title">
       <div class="panel-header">
         <div>
           <h2 id="services-title" class="panel-title">System status</h2>
-          <div class="panel-subtitle" id="updated-at">Updated manually</div>
+          <div id="updated-at" class="panel-subtitle">Loading</div>
         </div>
-        <div class="panel-subtitle" id="summary-grid"></div>
+        <div id="summary-grid" class="panel-subtitle"></div>
       </div>
       <div id="service-list" class="service-list"></div>
     </section>
-
-    <div class="actions">
-      <a class="history-button" href="#limits">View notes</a>
-    </div>
-
-    <section class="limits" id="limits" aria-labelledby="limits-title">
-      <article class="panel">
-        <div class="service-row">
-          <h3 id="limits-title">What you can do</h3>
-          <ul id="can-do-list"></ul>
-        </div>
-      </article>
-      <article class="panel">
-        <div class="service-row">
-          <h3>What you cannot do</h3>
-          <ul id="cannot-do-list"></ul>
-        </div>
-      </article>
-    </section>
-
-    <footer class="footer">
-      <p class="footnote">Static HTML + JS for GitHub Pages.</p>
-    </footer>
   </div>
 
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"
-  ></script>
   <script src="script.js"></script>
 </body>
 </html>

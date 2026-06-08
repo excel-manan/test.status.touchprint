@@ -1,0 +1,126 @@
+name: Update status
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-status:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update status.json
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+
+            const path = "status.json";
+            const data = JSON.parse(fs.readFileSync(path, "utf8"));
+            const now = new Date().toISOString();
+            const maxHistory = 288;
+
+            function getAssessment(httpStatus, responseTimeMs, expectedStatus) {
+              if (httpStatus !== expectedStatus) {
+                return { status: "outage", message: `HTTP ${httpStatus}` };
+              }
+
+              if (responseTimeMs >= 3000) {
+                return { status: "degraded", message: `Slow ${responseTimeMs} ms` };
+              }
+
+              return { status: "operational", message: "OK" };
+            }
+
+            async function checkSite(site) {
+              const started = Date.now();
+
+              try {
+                const response = await fetch(site.url, {
+                  method: "GET",
+                  redirect: "follow",
+                  signal: AbortSignal.timeout(site.timeoutMs || 15000)
+                });
+
+                const responseTimeMs = Date.now() - started;
+                const assessment = getAssessment(
+                  response.status,
+                  responseTimeMs,
+                  site.expectedStatus || 200
+                );
+
+                return {
+                  status: assessment.status,
+                  message: assessment.message,
+                  responseTimeMs
+                };
+              } catch {
+                return {
+                  status: "outage",
+                  message: "Request failed",
+                  responseTimeMs: null
+                };
+              }
+            }
+
+            function calculateUptime(history) {
+              if (!history.length) {
+                return null;
+              }
+
+              const okCount = history.filter((item) => item.status === "operational").length;
+              return Number(((okCount / history.length) * 100).toFixed(2));
+            }
+
+            let overallStatus = "Fully operational";
+            let overallMessage = "No active issues.";
+
+            for (const site of data.sites) {
+              const checked = await checkSite(site);
+              const current = data.results[site.id] || { history: [] };
+              const history = [
+                ...(current.history || []),
+                {
+                  time: now,
+                  status: checked.status,
+                  responseTimeMs: checked.responseTimeMs
+                }
+              ].slice(-maxHistory);
+
+              data.results[site.id] = {
+                status: checked.status,
+                message: checked.message,
+                responseTimeMs: checked.responseTimeMs,
+                uptime30d: calculateUptime(history),
+                history
+              };
+
+              if (checked.status === "outage") {
+                overallStatus = "Major outage";
+                overallMessage = `${site.name} is unavailable.`;
+              } else if (checked.status === "degraded" && overallStatus !== "Major outage") {
+                overallStatus = "Degraded performance";
+                overallMessage = `${site.name} is slow.`;
+              }
+            }
+
+            data.lastUpdated = now;
+            data.overallStatus = overallStatus;
+            data.overallMessage = overallMessage;
+
+            fs.writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`);
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add status.json
+          git diff --cached --quiet || git commit -m "Update status data"
+          git push
